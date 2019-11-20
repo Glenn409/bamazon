@@ -47,10 +47,13 @@ function buyItem(){
             if(data[0].stock_quantity < res.quantity){
                 console.log(`Insufficient quanitity, only ${data[0].stock_quantity} left in stock!`)
             } else {
+                console.log(data[0].product_sales)
+                let purchaseRevenue = res.quantity * data[0].price
                 console.log(`You ordered ${res.quantity} quantities of ${data[0].product_name}.`)
                 connection.query('UPDATE products SET ? WHERE ?',[
                     {
-                        stock_quantity: data[0].stock_quantity - res.quantity 
+                        stock_quantity: data[0].stock_quantity - res.quantity,
+                        product_sales: data[0].product_sales + purchaseRevenue
                     },
                     {
                         item_id: data[0].item_id

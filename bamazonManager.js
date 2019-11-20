@@ -23,21 +23,27 @@ connection.connect(function(err,res){
         switch(data.choice){
             case 'View Products for Sale':
                 readAllItems(true)
+                connection.end();
                 break;
             case 'View Low Inventory':
                 readAllItems('low')
+                connection.end();
                 break;
             case 'Add to Inventory':
+                readAllItems(true)
+                setTimeout(function(){
+                    addInventory()
+                },500)
                 break;
             case 'Add New Product':
+                addNewProduct()
                 break;
         }
-        connection.end()
+        
     })
 })
 
 function addInventory(){
-    readAllItems(true)
     inquire.prompt([
         {
             type: 'input',
@@ -50,8 +56,23 @@ function addInventory(){
             name:'quantity'
         }
     ]).then(function(data){
-        
-    })
+        connection.query('SELECT * FROM products WHERE item_id = ' + parseInt(data.id),
+        function(err,res){
+            connection.query('UPDATE products SET ? WHERE ?',
+            [
+                {
+                    stock_quantity: res[0].stock_quantity + parseInt(data.quantity)
+                },
+                {
+                    item_id: parseInt(data.id)
+                }
+            ],
+            function(err,res){
+                console.log('Purchase Completed!')
+                connection.end()
+            })
+        })
+    }) 
 }
 
 function readAllItems(decision){
@@ -73,4 +94,37 @@ function readAllItems(decision){
             }
         })
     }
+}
+
+function addNewProduct(){
+    inquire.prompt([
+        {
+            type: 'input',
+            message: 'What new product would you like to add to the store?',
+            name: 'productName'
+        },
+        {
+            type:'input',
+            message:'What department?',
+            name:'productDepartment'
+        },
+        {
+            type:'input',
+            message:'Price?',
+            name:'productPrice'
+        },
+        {
+            type:'input',
+            message:'How many in stock?',
+            name:'productStock'
+        }
+    ]).then(function(data){
+        connection.query(`INSERT INTO products (product_name,department_name,price,stock_quantity) VALUES ("${data.productName}","${data.productDepartment}",${parseInt(data.productPrice)},${parseInt(data.productStock)})`,
+        function(err,res){
+            if(err) throw err
+            console.log('Product inserted!')
+            readAllItems(true)
+            connection.end();
+        })
+    })
 }
